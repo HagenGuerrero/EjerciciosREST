@@ -12,6 +12,8 @@ const jwtSecret = "your jwt secret";
 app.use(bodyParser.json());
 app.use(cors({ origin: 'http://localhost:3000' }));
 
+//relacionado al usuario
+
 app.post("/register", async (req, res) =>{
     const { name, email, pss } = req.body;
     const hashedPss = await bcrypt.hash(pss,8);
@@ -55,7 +57,24 @@ app.post("/login", async (req, res) =>{
     );
 });
 
-app.
+//relacionada a las tareas
+
+app.post("/new-task", async (req, res) => {
+    const { title, description, due_date, reminder } = req.body;
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.decode(token);
+
+    db.query(
+        "INSERT INTO task (user_id, tasktitle, taskdescription, deadline, completed, reminder, createdat) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [decoded.id, title, description, Date.parse(due_date), 0, reminder, Date.now()],
+        async (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(201).json({ message: "Task created succesfully" });
+        }
+    )
+})
 
 app.listen(port,() =>{
     console.log(`Server is running on port ${port}`);
